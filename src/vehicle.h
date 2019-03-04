@@ -9,6 +9,9 @@ using std::map;
 using std::string;
 using std::vector;
 
+#define timestep 0.1 //corresponds to 10 timesteps
+//#define timestep 1 //corresponds to 50 timesteps
+
 class Vehicle {
  public:
   // Constructors

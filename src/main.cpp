@@ -70,8 +70,9 @@ int main() {
   my_car.goal_lane = 1; // center lane
   my_car.lanes_available = 3;
   my_car.goal_s = max_s;
-  my_car.target_speed = 49.999; //MPH
-  my_car.max_acceleration = 10; //  m/s²
+  my_car.target_speed = 49.5; //MPH
+  my_car.max_acceleration = 9.9; //  m/s²
+  my_car.v=0;
   
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
     &map_waypoints_dx,&map_waypoints_dy, &ref_vel, &lane, &too_close, &my_car, &road]
@@ -108,19 +109,31 @@ int main() {
               //   of the road.
               auto sensor_fusion = j[1]["sensor_fusion"];
               my_car.d= j[1]["d"];
-              my_car.set_lane(j[1]["d"]);
-              my_car.s=j[1]["s"];
-              my_car.yaw = j[1]["yaw"];
-              my_car.v = j[1]["speed"];
+              my_car.set_lane(j[1]["d"]);   
               
-              debug_file << "car data-> s:" << j[1]["s"] << "  d: " << j[1]["d"] << "  speed: " << j[1]["speed"] << std::endl;
+              int prev_size = previous_path_x.size();
+              double car_s = my_car.s;
+              if(prev_size > 0) {
+                car_s = end_path_s;
+                my_car.s = end_path_s;
+              }
+              else{
+                  my_car.s=j[1]["s"];
+                  car_s = my_car.s;
+              }
+              my_car.yaw = j[1]["yaw"];
+              my_car.a = j[1]["speed"];
+              my_car.a -= my_car.v;//v1 - v0 = a
+              my_car.v = j[1]["speed"];
+
+              debug_file << "car data-> s:" << j[1]["s"] << "  d: " << j[1]["d"] << "  speed: " << j[1]["speed"] << " my_car.a " << my_car.a << std::endl;
 
               for(int i = 0; i < sensor_fusion.size(); i++) {
                 //first check where cars are and update them
                 road.add_car(sensor_fusion[i]);
                   
                 //for debug
-                /*
+                
                 int id = sensor_fusion[i][0];
                 //int x_pos = sensor_fusion[1];
                 //int y_pos = sensor_fusion[2];
@@ -129,34 +142,31 @@ int main() {
                 double d = sensor_fusion[i][6];
                 double s = sensor_fusion[i][5];
                 double velocity = sqrt(vx*vx+vy*vy);
-                */
                 
-                //debug_file << "id:" << id << " vx:" << vx << " vy:" << vy << " d:" << d << " s:"<< s << " vel:" << velocity << std::endl;
+                
+               // std::cout << "Sensor Fusion-> id:" << id << " vx:" << vx << " vy:" << vy << " d:" << d << " s:"<< s << " vel:" << velocity << std::endl;
+               // std::cout << "Road id " << road.other_cars[i].id << " s:" << road.other_cars[i].s << " d:" << road.other_cars[i].d << std::endl;
               }
                         
-              //update predictions of the cars on the road for the defined time horizon
-              int horizon = 20;
+              //update predictions of the cars on the road for the defined time steps ahead
+              int horizon = 10;
               road.update_predictions(horizon);
               vector <Vehicle> next_trajectory = my_car.choose_next_state(road.predictions);
               
-              debug_file << "done choosing next state" << std::endl;
+              //debug_file << "done choosing next state" << std::endl;
               
               //debug_file << "my car" << std::endl;
               //debug_file << -1 << "," << my_car.s <<"," << my_car.d <<"," << my_car.v << "," << my_car.speed << std::endl;
               
               for(int i = 0; i < next_trajectory.size(); i++){
-              debug_file << next_trajectory[i].id << "," << next_trajectory.size()<<"," <<next_trajectory[i].s <<"," << next_trajectory[i].d <<"," << next_trajectory[i].lane << "," << next_trajectory[i].v << "," << next_trajectory[i].v << std::endl;
+              debug_file << next_trajectory[i].id << "," << next_trajectory.size()<<"," <<next_trajectory[i].s <<"," << next_trajectory[i].d <<"," << next_trajectory[i].lane << "," << next_trajectory[i].v << "," << next_trajectory[i].state << std::endl;
               }
 
               // List of (x,y) waypoints to be interpolated with a spline
               vector<double> ptsx;
               vector<double> ptsy;
               
-              int prev_size = previous_path_x.size();
-              double car_s = my_car.s;
-              if(prev_size > 0) {
-                car_s = end_path_s;
-              }
+
               // reference states
               //use car as starting reference
               double ref_x = car_x;
@@ -194,11 +204,11 @@ int main() {
                   debug_file<< "ptsx[" << i << "]= "<< ptsx[i] << " ptsy[" << i << "]= "<<ptsy[i]<<std::endl;
               }
               
-              debug_file << "calculate xy points for new trajectory" << " traj-size:" <<next_trajectory.size() << std::endl;
-              for(int i = 0; i< next_trajectory.size(); i++){
-                debug_file << "next_trajectory[i].s: " << next_trajectory[i].s << std::endl;
-                debug_file << "next_trajectory[i].lane: " << next_trajectory[i].lane << std::endl;
-                vector<double> next_wp = getXY(next_trajectory[i].s, 2 + 4*next_trajectory[i].lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+              //debug_file << "calculate xy points for new trajectory" << " traj-size:" <<next_trajectory.size() << std::endl;
+              //for(int i = 0; i< next_trajectory.size(); i++){
+                //debug_file << "next_trajectory[i].s: " << next_trajectory[i].s << std::endl;
+               // debug_file << "next_trajectory[i].lane: " << next_trajectory[i].lane << std::endl;
+                vector<double> next_wp = getXY(next_trajectory[1].s, 2 + 4*next_trajectory[1].lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
               //vector<double> next_wp1 = getXY(car_s + 60, 2 + 4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
               //vector<double> next_wp2 = getXY(car_s + 90, 2 + 4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
               
@@ -211,7 +221,7 @@ int main() {
               debug_file << next_wp[1] << std::endl;
              // ptsy.push_back(next_wp1[1]);
               //ptsy.push_back(next_wp2[1]);
-              }
+              //} //for
               
               for(int i = 0; i < ptsx.size(); i++) {
                 //shift the car reference angle to 0 degress
@@ -224,11 +234,11 @@ int main() {
               //create a spline
               tk::spline spline;
               // set the points to the spline
-              for(int i=0; i<ptsx.size(); i++){
-                  debug_file<< "ptsx[" << i << "]= "<< ptsx[i] << " ptsy[" << i << "]= "<<ptsy[i]<<std::endl;
-              }
+             //for(int i=0; i<ptsx.size(); i++){
+             //     debug_file<< "ptsx[" << i << "]= "<< ptsx[i] << " ptsy[" << i << "]= "<<ptsy[i]<<std::endl;
+            //  }
               spline.set_points(ptsx, ptsy);
-              debug_file << "done setting points" << std::endl;
+              //debug_file << "done setting points" << std::endl;
 
               // define vectors for next points
               vector<double> next_x_vals;
@@ -241,21 +251,25 @@ int main() {
               }
 
               // calculate how to break up spline points
-              double target_x = 30.0;
+              //double target_x = 30.0;
+              double target_x_idx = ptsx.size()-1;
+              double target_x = ptsx[target_x_idx];
               double target_y = spline(target_x);
+              double target_v_idx = next_trajectory.size()-1;
+              double target_v = next_trajectory[target_v_idx].v;
               double target_dist = sqrt(target_x*target_x + target_y*target_y);
               double x_add_on = 0;
-              debug_file << "target_y: " << target_y << "  target_dist:" << target_dist << std::endl;
+             // debug_file << "target_y: " << target_y << "  target_dist:" << target_dist << " target_v:" << target_v << std::endl;
               //fill up the rest of the path Planner
               for(int i = 1; i <= 50-prev_size;i++) {
                   
                 // N * t(0.02s) * vel = dist
-                double N = target_dist/(0.02/2.24);
+                double N = target_dist/(0.02*target_v/2.24);
                 
                 double x_point = x_add_on+target_x/N;
                 double y_point = spline(x_point);
                 x_add_on = x_point;
-                debug_file << "N: " << N << "  x_point:" << x_point << "  y_point:" << y_point << std::endl;
+             //   debug_file << "N: " << N << "  x_point:" << x_point << "  y_point:" << y_point << std::endl;
                 double x_ref = x_point;
                 double y_ref = y_point;
 

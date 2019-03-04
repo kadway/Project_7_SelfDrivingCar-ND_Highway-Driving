@@ -22,30 +22,32 @@ void Road::add_car(vector <double> sensor_fusion) {
   double velocity = sqrt(vx*vx+vy*vy);
   
   Vehicle other_car(-1, s, velocity, 0, "CS", d, id);
-  
-    while (it != this->other_cars.end()) {
+  //std::cout << "Road other car-> id:" << other_car.id << " d:" << other_car.d << " s:"<< other_car.s << std::endl;
+    /*while (it != this->other_cars.end()) {
     int v_id = it->first;
     Vehicle v = it->second;
     if (v.lane == other_car.lane && v.s == s) {
       this->other_cars.erase(v_id);
     }
     ++it;
-    }
-  
-  this->other_cars.insert(std::make_pair(id,other_car));
+    }*/
+  if (other_cars.size()>id)
+      other_cars.erase(id);
+  other_cars.emplace(id,other_car);
   
   //for debug
-  int idx = other_cars.size();
-  std::cout << "car added with id: " << other_cars[idx-1].id << " s: "<< other_cars[idx-1].s << " d: "<< other_cars[idx-1].d<< " v: " << other_cars[idx-1].v << std::endl;
-  std::cout << "other cars size: " << other_cars.size() << std::endl;
+  //int idx = other_cars.size();
+  //std::cout << "car added with id: " << other_cars[idx-1].id << " s: "<< other_cars[idx-1].s << " d: "<< other_cars[idx-1].d<< " v: " << other_cars[idx-1].v << std::endl;
+  //std::cout << "other cars size: " << other_cars.size() << std::endl;
 }
 
 void Road::update_predictions(int horizon){
     for(int i=0; i< other_cars.size(); i++){
-    this->predictions.insert(std::make_pair(this->other_cars[i].id, this->other_cars[i].generate_predictions(horizon)));
+        if (predictions.size()>i)
+      predictions.erase(i);
+    predictions.emplace(other_cars[i].id, other_cars[i].generate_predictions(horizon));
     }
     //for debug:
-   int idx = predictions.size();
-   std::cout << "predictions " << idx << " size: " << predictions[idx-1].size() << std::endl;
-  
+   //int idx = predictions.size();
+   //std::cout << "predictions " << idx << " size: " << predictions[idx-1].size() << std::endl;
 }
