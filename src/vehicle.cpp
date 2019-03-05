@@ -4,7 +4,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "cost.h"
 #include <iostream>
 #include <fstream>
 
@@ -35,67 +34,29 @@ Vehicle::Vehicle(int lane, float s, float v, float a, string state, double d, in
 Vehicle::~Vehicle() {}
 
 vector<Vehicle> Vehicle::choose_next_state(map<int, vector<Vehicle>> &predictions) {
-  /**
-   * Here you can implement the transition_function code from the Behavior
-   *   Planning Pseudocode classroom concept.
-   *
-   * @param A predictions map. This is a map of vehicle id keys with predicted
-   *   vehicle trajectories as values. Trajectories are a vector of Vehicle
-   *   objects representing the vehicle at the current timestep and one timestep
-   *   in the future.
-   * @output The best (lowest cost) trajectory corresponding to the next ego
-   *   vehicle state.
-   *
-   * Functions that will be useful:
-   * 1. successor_states - Uses the current state to return a vector of possible
-   *    successor states for the finite state machine.
-   * 2. generate_trajectory - Returns a vector of Vehicle objects representing
-   *    a vehicle trajectory, given a state and predictions. Note that
-   *    trajectory vectors might have size 0 if no possible trajectory exists
-   *    for the state.
-   * 3. calculate_cost - Included from cost.cpp, computes the cost for a trajectory.
-   *
-   * TODO: Your solution here.
-   */
-  std::ofstream debug_file;
-  debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
-  debug_file << "get successor states" << std::endl;
-  
+  //std::ofstream debug_file;
+  //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
   vector<string> states = successor_states();
-  //vector<string> states;
-  //states.push_back("KL");
-  for(int i =0; i< states.size(); i++){
-      debug_file << "sucessor states are: "<< states[i]<<std::endl;
-  }
-  debug_file.close();
-  float cost;
-  vector<float> costs;
+  //for(int i =0; i< states.size(); i++){
+  //    debug_file << "sucessor states are: "<< states[i]<<std::endl;
+  //}
+  //debug_file.close();
   vector<vector<Vehicle>> final_trajectories;
 
   for (vector<string>::iterator it = states.begin(); it != states.end(); ++it) {
     vector<Vehicle> trajectory = generate_trajectory(*it, predictions);
-    debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
+    //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
     if (trajectory.size() != 0) {
-        debug_file << "calculate costs" << std::endl;
-      cost = calculate_cost(*this, predictions, trajectory);
-      costs.push_back(cost);
       final_trajectories.push_back(trajectory);
     }
-    debug_file.close();
+    //debug_file.close();
      
   }
-   debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
-    debug_file << " final_traj. size" << final_trajectories.size() << std::endl;
-    debug_file << " costs. size" << costs.size() << std::endl;
-    debug_file.close();
-    
-  vector<float>::iterator best_cost = min_element(begin(costs), end(costs));
-  int best_idx = distance(begin(costs), best_cost);
+   //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
+   //debug_file << " final_traj. size" << final_trajectories.size() << std::endl;
+   //debug_file.close();
 
-  /**
-   * TODO: Change return value here:
-   */
-  return final_trajectories[best_idx];
+  return final_trajectories[0];
 }
 
 vector<string> Vehicle::successor_states() {
