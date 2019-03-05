@@ -302,11 +302,11 @@ bool Vehicle::get_vehicle_behind(map<int, vector<Vehicle>> &predictions,
   for (map<int, vector<Vehicle>>::iterator it = predictions.begin();
        it != predictions.end(); ++it) {
     temp_vehicle = it->second[0];
-    if (temp_vehicle.lane == this->lane && temp_vehicle.s < this->s
+    if (temp_vehicle.lane == lane && temp_vehicle.s < this->s
         && temp_vehicle.s > max_s) {
       max_s = temp_vehicle.s;
       rVehicle = temp_vehicle;
-      if((this->s - max_s) < 30){
+      if((this->s - max_s) < 50){
         found_vehicle = true;
       }
     }
@@ -330,11 +330,11 @@ bool Vehicle::get_vehicle_ahead(map<int, vector<Vehicle>> &predictions,
        it != predictions.end(); ++it) {
     temp_vehicle = it->second[0];
     debug_file << "other vehicle ->s, ->d: ->"<<temp_vehicle.s << ", ->"<<temp_vehicle.d << std::endl;
-    if (temp_vehicle.lane == this->lane && temp_vehicle.s > this->s
+    if (temp_vehicle.lane == lane && temp_vehicle.s > this->s
         && temp_vehicle.s < min_s) {
       min_s = temp_vehicle.s;
       rVehicle = temp_vehicle;
-      if((min_s-this->s) < 30){
+      if((min_s-this->s) < 50){
         found_vehicle = true;
       }
     }
