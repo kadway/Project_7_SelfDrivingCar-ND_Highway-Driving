@@ -83,21 +83,13 @@ vector<Vehicle> Vehicle::generate_trajectory(string state,
   // Given a possible next state, generate the appropriate trajectory to realize
   //   the next state.
   vector<Vehicle> trajectory;
-  std::ofstream debug_file;
-  debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
-  //debug
-  debug_file << "state is: " << state << std::endl;
   
-  if (state.compare("CS") == 0) {
-    trajectory = constant_speed_trajectory();
-  } else if (state.compare("KL") == 0) {
+  if (state.compare("KL") == 0) {
     trajectory = keep_lane_trajectory(predictions);
   } else if (state.compare("LCL") == 0 || state.compare("LCR") == 0) {
     trajectory = lane_change_trajectory(state, predictions);
-  } else if (state.compare("PLCL") == 0 || state.compare("PLCR") == 0) {
-    trajectory = prep_lane_change_trajectory(state, predictions);
   }
- debug_file.close();
+
   return trajectory;
 }
 
