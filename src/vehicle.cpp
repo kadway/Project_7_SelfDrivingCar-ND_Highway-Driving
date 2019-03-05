@@ -66,20 +66,13 @@ vector<string> Vehicle::successor_states() {
   vector<string> states;
   states.push_back("KL");
   string state = this->state;
-  if(state.compare("KL") == 0) {
-    states.push_back("PLCL");
-    states.push_back("PLCR");
-  } else if (state.compare("PLCR") == 0) {
+  
     if (lane != lanes_available - 1) {
-      states.push_back("PLCR");
       states.push_back("LCR");
     }
-  } else if (state.compare("PLCL") == 0) {
     if (lane != 0) {
-      states.push_back("PLCL");
       states.push_back("LCL");
     }
-  }
 
   // If state is "LCL" or "LCR", then just return "KL"
   return states;
