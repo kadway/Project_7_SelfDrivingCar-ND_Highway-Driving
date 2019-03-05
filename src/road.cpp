@@ -15,11 +15,12 @@ void Road::add_car(vector <double> sensor_fusion) {
   int id = sensor_fusion[0];
 //int x_pos = sensor_fusion[1];
 //int y_pos = sensor_fusion[2];
-  double vx = sensor_fusion[3];
-  double vy = sensor_fusion[4];
-  double d = sensor_fusion[6];
-  double s = sensor_fusion[5];
-  double velocity = sqrt(vx*vx+vy*vy);
+  double vx = sensor_fusion[3]; //in m/s
+  double vy = sensor_fusion[4]; // in m/s
+  double d = sensor_fusion[6]; //frenet coordinates
+  double s = sensor_fusion[5]; // frenet coordinates
+  double velocity = sqrt(vx*vx+vy*vy); //  m/s
+  //velocity = velocity*2.24; //convert to miles per hour
   
   Vehicle other_car(-1, s, velocity, 0, "CS", d, id);
   //std::cout << "Road other car-> id:" << other_car.id << " d:" << other_car.d << " s:"<< other_car.s << std::endl;

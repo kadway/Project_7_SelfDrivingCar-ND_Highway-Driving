@@ -13,7 +13,7 @@ using std::vector;
 // Initializes Vehicle
 Vehicle::Vehicle(){}
 
-Vehicle::Vehicle(int lane, float s, float v, float a, string state, double d, int id) {
+Vehicle::Vehicle(int lane, float s, float v, float a, string state, float d, int id) {
   
   this->s = s;
   this->v = v;
@@ -124,8 +124,8 @@ vector<float> Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
       debug_file << "Kinematics- Theres a Vehicle behind! new velocity was ZERO " << std::endl;
     } else {
       */
-      //max_velocity_in_front = (vehicle_ahead.s - this->s - this->preferred_buffer)/timestep; //+ vehicle_ahead.v - 0.5 * (this->a)*timestep;
-      max_velocity_in_front = this->v - 0.3; 
+      //max_velocity_in_front = (vehicle_ahead.s - this->s - this->preferred_buffer)/timestep + vehicle_ahead.v - 0.5 * (this->a)*timestep;
+      max_velocity_in_front = this->v - 1; 
       
       // float max_velocity_in_front = (vehicle_ahead.position_at(timestep) - this->position_at(timestep)-this->preferred_buffer);
       debug_file << "Kinematics- Vehicle ahead with S:" << vehicle_ahead.s << " vehicle d:"<<vehicle_ahead.d <<" vehicle V:" << vehicle_ahead.v << " || My S:" << this->s <<" my d:" << this->d<< " max_velocity_in_front: " << max_velocity_in_front << std::endl;
@@ -291,7 +291,7 @@ bool Vehicle::get_vehicle_behind(map<int, vector<Vehicle>> &predictions,
         && temp_vehicle.s > max_s) {
       max_s = temp_vehicle.s;
       rVehicle = temp_vehicle;
-      if((this->s - max_s) < 50){
+      if((this->s - max_s) < 30){
         found_vehicle = true;
       }
     }
@@ -319,7 +319,7 @@ bool Vehicle::get_vehicle_ahead(map<int, vector<Vehicle>> &predictions,
         && temp_vehicle.s < min_s) {
       min_s = temp_vehicle.s;
       rVehicle = temp_vehicle;
-      if((min_s-this->s) < 50){
+      if((min_s-this->s) < 30){
         found_vehicle = true;
       }
     }
