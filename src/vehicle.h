@@ -16,7 +16,7 @@ class Vehicle {
  public:
   // Constructors
   Vehicle();
-  Vehicle(int lane, float s, float v, float a, string state="CS", double d = -1, int id = -1);
+  Vehicle(int lane, float s, float v, float a, string state="CS", float d = -1, int id = -1);
 
   // Destructor
   virtual ~Vehicle();
@@ -73,9 +73,9 @@ class Vehicle {
   int preferred_buffer = 6; // impacts "keep lane" behavior.
 
   int lane, goal_lane, lanes_available, id;
-  double yaw, x, y, s, d, goal_s;
+  double yaw, x, y, s, goal_s;
 
-  float v, target_speed, a, max_acceleration;
+  float d, v, target_speed, a, max_acceleration;
   
   
 

@@ -41,22 +41,30 @@ vector<Vehicle> Vehicle::choose_next_state(map<int, vector<Vehicle>> &prediction
   //    debug_file << "sucessor states are: "<< states[i]<<std::endl;
   //}
   //debug_file.close();
-  vector<vector<Vehicle>> final_trajectories;
-
+  map<string, vector<Vehicle>> final_trajectories;
+  float best_speed=0;
+  string best_state = "KL"; // defaults to Keep Lane
   for (vector<string>::iterator it = states.begin(); it != states.end(); ++it) {
     vector<Vehicle> trajectory = generate_trajectory(*it, predictions);
     //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
     if (trajectory.size() != 0) {
-      final_trajectories.push_back(trajectory);
+        final_trajectories.emplace(trajectory[1].state, trajectory);
+      if(trajectory[1].v>best_speed+1 && this->v > 15){
+          best_speed = trajectory[1].v;
+          best_state = trajectory[1].state;
+          //std::cout << "trajectory: " << trajectory[1].state << "  velc:" << trajectory[1].v << std::endl;
+          //best_speed = trajectory[1].v;
+      }
+  
     }
     //debug_file.close();
-     
   }
    //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
    //debug_file << " final_traj. size" << final_trajectories.size() << std::endl;
    //debug_file.close();
-
-  return final_trajectories[0];
+  
+  //std::cout << "best trajectory: " << final_trajectories[best_state][1].state << "  velc:" << final_trajectories[best_state][1].v << std::endl;
+  return final_trajectories[best_state];
 }
 
 vector<string> Vehicle::successor_states() {
@@ -139,8 +147,8 @@ vector<float> Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
   }
   
   new_velocity = std::min(std::min(max_velocity_in_front, max_velocity_accel_limit), this->target_speed);
-  new_accel = (new_velocity - this->v)/timestep; // Equation: (v_1 - v_0)/t = acceleration
-  new_position = this->s + new_velocity*timestep + new_accel*timestep*timestep / 2.0;
+  //new_accel = (new_velocity - this->v)/timestep; // Equation: (v_1 - v_0)/t = acceleration
+  //new_position = this->s + new_velocity*timestep + new_accel*timestep*timestep / 2.0;
   debug_file << "Kinematics end: new_acel: " << new_accel << " new S pos: " << new_position << std::endl;
   debug_file.close();
   
@@ -249,12 +257,14 @@ vector<Vehicle> Vehicle::lane_change_trajectory(string state,
   //   that spot).
   for (map<int, vector<Vehicle>>::iterator it = predictions.begin();
        it != predictions.end(); ++it) {
-    next_lane_vehicle = it->second[0];
-    if (next_lane_vehicle.s == this->s && next_lane_vehicle.lane == new_lane) {
-        debug_file << "Lane change traj. - change to lane " << new_lane << " is not possible" << std::endl;
-      // If lane change is not possible, return empty trajectory.
-      return trajectory;
-    }
+      for(int i=0; i< it->second.size(); i++){
+        next_lane_vehicle = it->second[i];
+            if (abs(next_lane_vehicle.s -this->s)<30 && next_lane_vehicle.lane == new_lane) {
+            debug_file << "Lane change traj. - change to lane " << new_lane << " is not possible" << std::endl;
+            // If lane change is not possible, return empty trajectory.
+            return trajectory;
+            }
+      }
   }
   trajectory.push_back(Vehicle(this->lane, this->s, this->v, this->a,
                                this->state));
@@ -319,7 +329,7 @@ bool Vehicle::get_vehicle_ahead(map<int, vector<Vehicle>> &predictions,
         && temp_vehicle.s < min_s) {
       min_s = temp_vehicle.s;
       rVehicle = temp_vehicle;
-      if((min_s-this->s) < 30){
+      if((min_s-this->s) < 25){
         found_vehicle = true;
       }
     }
