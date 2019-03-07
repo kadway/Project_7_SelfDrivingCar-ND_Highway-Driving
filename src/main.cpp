@@ -283,9 +283,9 @@ int main() {
               }
 
               // calculate how to break up spline points
-              //double target_x = 30.0;
-              double target_x_idx = ptsx.size()-1;
-              double target_x = ptsx[target_x_idx];
+              double target_x = 30.0; //meters
+              //double target_x_idx = ptsx.size()-1;
+              //double target_x = ptsx[target_x_idx];
               double target_y = spline(target_x);
               double target_v_idx = next_trajectory.size()-1;
               double target_v = next_trajectory[target_v_idx].v;

@@ -49,7 +49,7 @@ vector<Vehicle> Vehicle::choose_next_state(map<int, vector<Vehicle>> &prediction
     //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
     if (trajectory.size() != 0) {
         final_trajectories.emplace(trajectory[1].state, trajectory);
-      if(trajectory[1].v>best_speed+1 && this->v > 15){
+      if(trajectory[1].v>best_speed+0.2 && this->v > 15){
           best_speed = trajectory[1].v;
           best_state = trajectory[1].state;
           //std::cout << "trajectory: " << trajectory[1].state << "  velc:" << trajectory[1].v << std::endl;
@@ -109,7 +109,8 @@ vector<float> Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
   std::ofstream debug_file;
   debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
   
-  float max_velocity_accel_limit = this->max_acceleration*timestep + this->v;
+  //float max_velocity_accel_limit = this->max_acceleration*timestep + this->v;
+  float max_velocity_accel_limit = 0.2 + this->v;
   debug_file << "Kinematics- max_velocity_accel_limit: " << max_velocity_accel_limit << std::endl;
   debug_file << "Kinematics- this-> target speed: " << this->target_speed << std::endl;
   debug_file.close();
@@ -133,7 +134,7 @@ vector<float> Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
     } else {
       */
       //max_velocity_in_front = (vehicle_ahead.s - this->s - this->preferred_buffer)/timestep + vehicle_ahead.v - 0.5 * (this->a)*timestep;
-      max_velocity_in_front = this->v - 1; 
+      max_velocity_in_front = this->v - 0.2; 
       
       // float max_velocity_in_front = (vehicle_ahead.position_at(timestep) - this->position_at(timestep)-this->preferred_buffer);
       debug_file << "Kinematics- Vehicle ahead with S:" << vehicle_ahead.s << " vehicle d:"<<vehicle_ahead.d <<" vehicle V:" << vehicle_ahead.v << " || My S:" << this->s <<" my d:" << this->d<< " max_velocity_in_front: " << max_velocity_in_front << std::endl;
@@ -329,7 +330,7 @@ bool Vehicle::get_vehicle_ahead(map<int, vector<Vehicle>> &predictions,
         && temp_vehicle.s < min_s) {
       min_s = temp_vehicle.s;
       rVehicle = temp_vehicle;
-      if((min_s-this->s) < 25){
+      if((min_s-this->s) < 30){
         found_vehicle = true;
       }
     }
