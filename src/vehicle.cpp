@@ -33,18 +33,20 @@ Vehicle::Vehicle(int lane, float s, float v, float a, string state, float d, int
 Vehicle::~Vehicle() {}
 
 vector<Vehicle> Vehicle::choose_next_state(map<int, vector<Vehicle>> &predictions) {
-
+    
     vector<string> states = successor_states();
-
+    
     map<string, vector<Vehicle>> final_trajectories;
     float best_speed=0;
     string best_state = "KL"; // defaults to Keep Lane
     for (vector<string>::iterator it = states.begin(); it != states.end(); ++it) {
         vector<Vehicle> trajectory = generate_trajectory(*it, predictions);
-    
+        
         if (trajectory.size() != 0) {
             final_trajectories.emplace(trajectory[0].state, trajectory);
-            if(trajectory[0].v>best_speed+0.1 && this->v > 15){
+            // if trajectory change results in heigher velocity do it 
+            // but only if actual velocity is higher than 13.4 m/s (close to 30 mph)
+            if(trajectory[0].v>best_speed+0.1 && this->ref_v > 13.4){
                 best_speed = trajectory[0].v;
                 best_state = trajectory[0].state;
             }
@@ -61,14 +63,13 @@ vector<string> Vehicle::successor_states() {
     states.push_back("KL");
     string state = this->state;
     
-    if (lane != lanes_available - 1) {
-        states.push_back("LCR");
-    }
     if (lane != 0) {
         states.push_back("LCL");
     }
+    if (lane != lanes_available - 1) {
+        states.push_back("LCR");
+    }
     
-    // If state is "LCL" or "LCR", then just return "KL"
     return states;
 }
 
@@ -87,71 +88,41 @@ vector<Vehicle> Vehicle::generate_trajectory(string state,
     return trajectory;
 }
 
-vector<float> Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
+float Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
         int lane) {
     // Gets next timestep kinematics (position, velocity, acceleration)
     //   for a given lane. Tries to choose the maximum velocity and acceleration,
     //   given other vehicle positions and accel/velocity constraints.
-    //std::ofstream debug_file;
-    //debug_file.open ("debug_vehicle.log", std::ios::out | std::ios::app);
     
-    //float max_velocity_accel_limit = this->max_acceleration*timestep + this->v;
-    float max_velocity_accel_limit = 0.2 + this->v;
-    //debug_file << "Kinematics- max_velocity_accel_limit: " << max_velocity_accel_limit << std::endl;
-    //debug_file << "Kinematics- this-> target speed: " << this->target_speed << std::endl;
-    
-    float new_position;
+    float max_velocity_accel_limit = this->ref_v + this->max_acceleration*timestep;
     float new_velocity;
-    float new_accel;
     Vehicle vehicle_ahead;
-    Vehicle vehicle_behind;
-    float max_velocity_in_front = this->v; //default to constant velocity
+    float max_velocity_in_front = max_velocity_accel_limit; //default to max
     
     if (get_vehicle_ahead(predictions, lane, vehicle_ahead)) {
-        
-        /*if (get_vehicle_behind(predictions, lane, vehicle_behind)) {      
-         // must travel at the speed of traffic, regardless of preferred buffer
-         if(vehicle_ahead.v>0){
-         new_velocity = vehicle_ahead.v;
-         }
-         else {
-         max_velocity_in_front = (vehicle_ahead.s - this->s - this->preferred_buffer)/timestep + vehicle_ahead.v - 0.5 * (this->a)*timestep;
-         */
-        max_velocity_in_front = this->v - 0.2;
-        // float max_velocity_in_front = (vehicle_ahead.position_at(timestep) - this->position_at(timestep)-this->preferred_buffer);
-        /* }
-         } else {      
-         new_velocity = std::min(max_velocity_accel_limit, this->target_speed);
-         }*/
+        max_velocity_in_front = this->ref_v - this->max_acceleration*timestep;
     }
-    
     new_velocity = std::min(std::min(max_velocity_in_front, max_velocity_accel_limit), this->target_speed);
-    //new_accel = (new_velocity - this->v)/timestep; // Equation: (v_1 - v_0)/t = acceleration
-    //new_position = this->s + new_velocity*timestep + new_accel*timestep*timestep / 2.0;
-    //debug_file.close();
     
-    return{new_position, new_velocity, new_accel};
+    return new_velocity;
 }
 
 
 vector<Vehicle> Vehicle::keep_lane_trajectory(map<int, vector<Vehicle>> &predictions) {
-
+    
     // Generate a keep lane trajectory.
     vector<Vehicle> trajectory;
-  
-    vector<float> kinematics = get_kinematics(predictions, this->lane);
-    float new_s = kinematics[0];
-    float new_v = kinematics[1];
-    float new_a = kinematics[2];
     
-    trajectory.push_back(Vehicle(this->lane, new_s, new_v, new_a, "KL"));
+    float new_v = get_kinematics(predictions, this->lane);
+    
+    trajectory.push_back(Vehicle(this->lane, 0, new_v, 0, "KL"));
     
     return trajectory;
 }
 
 vector<Vehicle> Vehicle::lane_change_trajectory(string state,
         map<int, vector<Vehicle>> &predictions) {
-
+    
     // Generate a lane change trajectory.
     int new_lane = this->lane + lane_direction[state];
     
@@ -169,19 +140,19 @@ vector<Vehicle> Vehicle::lane_change_trajectory(string state,
             }
         }
     }
-    vector<float> kinematics = get_kinematics(predictions, new_lane);
-    trajectory.push_back(Vehicle(new_lane, kinematics[0], kinematics[1],
-            kinematics[2], state));
+    float new_v = get_kinematics(predictions, new_lane);
+    trajectory.push_back(Vehicle(new_lane, 0, new_v, 0, state));
     
     return trajectory;
 }
 
-void Vehicle::increment(int dt = timestep) {
-    this->s = position_at(dt);
+void Vehicle::increment(int dt, int prev_size) {
+    this->s = position_at(dt, prev_size);
 }
 
-float Vehicle::position_at(int t) {
-    return this->s + this->v*t + this->a*t*t/2.0;
+float Vehicle::position_at(int t, int prev_size) {
+    //check_car_s += ((double)prev_size*0.02*check_speed);
+    return this->s + this->v*t*prev_size;
 }
 
 bool Vehicle::get_vehicle_behind(map<int, vector<Vehicle>> &predictions,
@@ -220,14 +191,16 @@ bool Vehicle::get_vehicle_ahead(map<int, vector<Vehicle>> &predictions,
     //debug_file << "get vehicle ahead: this->s, this-> d "<< this->s << ","<< this->d<<std::endl;
     for (map<int, vector<Vehicle>>::iterator it = predictions.begin();
             it != predictions.end(); ++it) {
-        temp_vehicle = it->second[0];
-        //debug_file << "other vehicle ->s, ->d: ->"<<temp_vehicle.s << ", ->"<<temp_vehicle.d << std::endl;
-        if (temp_vehicle.lane == lane && temp_vehicle.s > this->s
-                && temp_vehicle.s < min_s) {
-            min_s = temp_vehicle.s;
-            rVehicle = temp_vehicle;
-            if((min_s-this->s) < 30){
-                found_vehicle = true;
+        for(int i=0; i< it->second.size(); i++){
+            temp_vehicle = it->second[i];
+            //debug_file << "other vehicle ->s, ->d: ->"<<temp_vehicle.s << ", ->"<<temp_vehicle.d << std::endl;
+            if (temp_vehicle.lane == lane && temp_vehicle.s > this->s
+                    && temp_vehicle.s < min_s) {
+                min_s = temp_vehicle.s;
+                rVehicle = temp_vehicle;
+                if((min_s-this->s) < 30){
+                    found_vehicle = true;
+                }
             }
         }
     }
@@ -235,15 +208,15 @@ bool Vehicle::get_vehicle_ahead(map<int, vector<Vehicle>> &predictions,
     return found_vehicle;
 }
 
-vector<Vehicle> Vehicle::generate_predictions(int horizon) {
+vector<Vehicle> Vehicle::generate_predictions(int horizon, int prev_size) {
     // Generates predictions for non-ego vehicles to be used in trajectory
     //   generation for the ego vehicle.
     vector<Vehicle> predictions;
     for(int i = 0; i < horizon; i++) {
-        float next_s = position_at(i*timestep);
+        float next_s = position_at(i*timestep, prev_size);
         float next_v = 0;
         if (i < horizon-1) {
-            next_v = position_at(i*timestep) - s;
+            next_v = position_at(i*timestep, prev_size) - s;
         }
         predictions.push_back(Vehicle(this->lane, next_s, next_v, 0));
     }

@@ -31,13 +31,13 @@ void Road::add_car(vector <double> sensor_fusion) {
     other_cars.emplace(id,other_car);
 }
 
-void Road::update_predictions(int horizon){
+void Road::update_predictions(int horizon, int prev_size){
     for(int i=0; i< other_cars.size(); i++){
         if (predictions.size()>i){
             //remove old predictions
             predictions.erase(i);
         }
         //generate new predictions
-        predictions.emplace(other_cars[i].id, other_cars[i].generate_predictions(horizon));
+        predictions.emplace(other_cars[i].id, other_cars[i].generate_predictions(horizon, prev_size));
     }
 }

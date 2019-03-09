@@ -16,5 +16,5 @@ public:
     //add cars to the road
     void add_car(vector <double> sensor_fusion);
     //update cars predictions
-    void update_predictions(int horizon);
+    void update_predictions(int horizon, int prev_size);
 };

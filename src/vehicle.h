@@ -9,7 +9,7 @@ using std::map;
 using std::string;
 using std::vector;
 
-#define timestep 0.1 //corresponds to 10 timesteps
+#define timestep 0.02 //corresponds to 10 timesteps
 //#define timestep 1 //corresponds to 50 timesteps
 
 class Vehicle {
@@ -29,7 +29,7 @@ public:
     vector<Vehicle> generate_trajectory(string state,
     map<int, vector<Vehicle>> &predictions);
     
-    vector<float> get_kinematics(map<int, vector<Vehicle>> &predictions, int lane);
+    float get_kinematics(map<int, vector<Vehicle>> &predictions, int lane);
     
     
     vector<Vehicle> keep_lane_trajectory(map<int, vector<Vehicle>> &predictions);
@@ -39,9 +39,9 @@ public:
     
     void set_lane(double d);
     
-    void increment(int dt);
+    void increment(int dt, int prev_size);
     
-    float position_at(int t);
+    float position_at(int t, int prev_size);
     
     bool get_vehicle_behind(map<int, vector<Vehicle>> &predictions, int lane,
     Vehicle &rVehicle);
@@ -49,7 +49,7 @@ public:
     bool get_vehicle_ahead(map<int, vector<Vehicle>> &predictions, int lane,
     Vehicle &rVehicle);
     
-    vector<Vehicle> generate_predictions(int horizon=2);
+    vector<Vehicle> generate_predictions(int horizon, int prev_size);
    
     
     // public Vehicle variables
@@ -68,7 +68,7 @@ public:
     int lane, goal_lane, lanes_available, id;
     double yaw, x, y, s, goal_s;
     
-    float d, v, target_speed, a, max_acceleration;
+    float d, v, target_speed, a, max_acceleration, ref_v;
 
     string state;
 };
