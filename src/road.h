@@ -7,12 +7,14 @@
 #include "vehicle.h"
 
 class Road {
- public:   
-  //vector of Vehicles for all other cars on the road
-  map <int, Vehicle> other_cars;
-  map <int, vector<Vehicle> > predictions;
-  
-  //add cars to the road
-  void add_car(vector <double> sensor_fusion);
-  void update_predictions(int horizon);
+public:   
+    //map of Vehicles for all other cars on the road
+    map <int, Vehicle> other_cars;
+    //map of vectors of Vehicle predictions
+    map <int, vector<Vehicle> > predictions;
+    
+    //add cars to the road
+    void add_car(vector <double> sensor_fusion);
+    //update cars predictions
+    void update_predictions(int horizon);
 };
