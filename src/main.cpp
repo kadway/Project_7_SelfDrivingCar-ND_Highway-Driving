@@ -61,7 +61,7 @@ int main() {
     
     my_car.lanes_available = 3;
     my_car.goal_s = max_s;
-    my_car.target_speed = 22.30; // m/s (22.35 is 50 miles/h)
+    my_car.target_speed = 22.20; // m/s (22.35 is 50 miles/h)
     my_car.max_acceleration = 9; //  m/s² bellow the limit 10m/s²
     my_car.ref_v = 0.0;
     h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
@@ -78,10 +78,6 @@ int main() {
                 string event = j[0].get<string>();
                 
                 if (event == "telemetry") {
-                    //open file for debug
-                    std::ofstream debug;
-                    debug.open ("debug.log", std::ios::out | std::ios::app);
-                    
                     // j[1] is the data JSON object
                     // Main car's localization Data
                     double car_x = j[1]["x"];
@@ -101,28 +97,23 @@ int main() {
                     auto sensor_fusion = j[1]["sensor_fusion"];
                     my_car.d= j[1]["d"];
                     my_car.set_lane(j[1]["d"]);   
-                    //my_car.a = j[1]["speed"];
-                    //my_car.a /= 2.24; //actual velocity
-                    //my_car.a -= my_car.v; //subtract with old velocity
-                    //my_car.a = my_car.a / timestep; // divide by delta_t    - >  v1 -v2 / t = acceleration
-                    //debug << "main accel from simulator = " << my_car.a << std::endl;
+            
                     int prev_size = previous_path_x.size();
                     double car_s = my_car.s;
+                    
+                    //if there were previous points will generate new points after the last one
                     if(prev_size > 0) {
                         car_s = end_path_s;
                         my_car.s = end_path_s;
                     }
                     else{
-                        debug << "Prev List EMPTY" << std::endl;
                         my_car.s=j[1]["s"];
                         car_s = my_car.s;
                     }
                     my_car.yaw = j[1]["yaw"];
-                   // my_car.v = j[1]["speed"];
-                   // my_car.v = my_car.v/2.24; //convert miles/h to m/s
-                    my_car.L +=1 ;
+                    
                     for(int i = 0; i < sensor_fusion.size(); i++) {
-                        //first check where cars are and update them
+                        //save where other cars are
                         road.add_car(sensor_fusion[i]);
                     }
                     
@@ -207,19 +198,11 @@ int main() {
                     
                     // calculate how to break up spline points
                     double target_x = 30.0; //meters
-                    //double target_x_idx = ptsx.size()-1;
-                    //double target_x = ptsx[target_x_idx];
                     double target_y = spline(target_x);
-                    //double target_v_idx = next_trajectory.size()-1;
-                   // debug << "main: " << my_car.L << "; V_0=" << my_car.v << " V_1=" << next_trajectory[0].v << std::endl;
-                    //debug << "main: " << my_car.L << "; a_new=" << (next_trajectory[0].v-my_car.v)/0.02 << std::endl;
-                    //float target_v = my_car.ref_v;
                     double target_dist = sqrt(target_x*target_x + target_y*target_y);
                     double x_add_on = 0;
-                    //fill up the rest of the path Planner
                     for(int i = 1; i <= 50-prev_size;i++) {
                         // N * t(0.02s) * vel = dist
-                        //double N = target_dist/(0.02*target_v/2.24);
                         double N = target_dist/(0.02*my_car.ref_v); //velocity in m/s already
                         double x_point = x_add_on+target_x/N;
                         double y_point = spline(x_point);
@@ -237,9 +220,7 @@ int main() {
                         next_x_vals.push_back(x_point);
                         next_y_vals.push_back(y_point);
                     }
-                    
-                    debug.close();
-                    
+ 
                     json msgJson;
                     msgJson["next_x"] = next_x_vals;
                     msgJson["next_y"] = next_y_vals;

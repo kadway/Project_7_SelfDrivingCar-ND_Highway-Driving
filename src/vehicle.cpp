@@ -35,7 +35,6 @@ Vehicle::~Vehicle() {}
 vector<Vehicle> Vehicle::choose_next_state(map<int, vector<Vehicle>> &predictions) {
     
     vector<string> states = successor_states();
-    
     map<string, vector<Vehicle>> final_trajectories;
     float best_speed=0;
     string best_state = "KL"; // defaults to Keep Lane
@@ -44,7 +43,7 @@ vector<Vehicle> Vehicle::choose_next_state(map<int, vector<Vehicle>> &prediction
         
         if (trajectory.size() != 0) {
             final_trajectories.emplace(trajectory[0].state, trajectory);
-            // if trajectory change results in heigher velocity do it 
+            // if trajectory change results in higher velocity do it 
             // but only if actual velocity is higher than 13.4 m/s (close to 30 mph)
             if(trajectory[0].v>best_speed+0.1 && this->ref_v > 13.4){
                 best_speed = trajectory[0].v;
@@ -63,10 +62,10 @@ vector<string> Vehicle::successor_states() {
     states.push_back("KL");
     string state = this->state;
     
-    if (lane != 0) {
+    if (this->state == "KL" && lane != 0) {
         states.push_back("LCL");
     }
-    if (lane != lanes_available - 1) {
+    else if (this->state == "KL" && lane != lanes_available - 1) {
         states.push_back("LCR");
     }
     
@@ -90,7 +89,7 @@ vector<Vehicle> Vehicle::generate_trajectory(string state,
 
 float Vehicle::get_kinematics(map<int, vector<Vehicle>> &predictions,
         int lane) {
-    // Gets next timestep kinematics (position, velocity, acceleration)
+    // Gets next timestep kinematics
     //   for a given lane. Tries to choose the maximum velocity and acceleration,
     //   given other vehicle positions and accel/velocity constraints.
     

@@ -9,7 +9,7 @@ using std::map;
 using std::string;
 using std::vector;
 
-#define timestep 0.02 //corresponds to 10 timesteps
+#define timestep 0.02 //corresponds to 1 timestep
 //#define timestep 1 //corresponds to 50 timesteps
 
 class Vehicle {
@@ -30,7 +30,6 @@ public:
     map<int, vector<Vehicle>> &predictions);
     
     float get_kinematics(map<int, vector<Vehicle>> &predictions, int lane);
-    
     
     vector<Vehicle> keep_lane_trajectory(map<int, vector<Vehicle>> &predictions);
     
